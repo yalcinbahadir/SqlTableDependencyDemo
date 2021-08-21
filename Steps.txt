@@ -1,0 +1,60 @@
+1. Create database table annd the model according to your database table that you want to follow.
+---------------
+    public class Customer
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Surname { get; set; }
+        //Properties not present in the database are ignored
+        public string City { get; set; }
+        public DateTime Born { get; set; }
+    }
+---------------
+2. Instal package SqlTableDependency
+3. Properties that does not exixts in table are nor mapped.
+4. Set connection string.
+5. Create the SqlTableDependecy instance. Use following snippets.
+---------------
+class Program
+    {
+        static void Main(string[] args)
+        {
+            var cs = @"Data Source=PF1GGK43\SQLEXPRESS02;Initial Catalog=SqlTableDependency;MultipleActiveResultSets=true; Integrated Security=true;";
+
+            using (var tableDependency=new SqlTableDependency<Customer>(cs,"Customer"))
+            {
+                tableDependency.OnChanged += TableDependency_OnChanged;
+                tableDependency.OnError += TableDependency_OnError;
+
+                tableDependency.Start();
+                Console.WriteLine("Waiting for receiving notifications...");
+                Console.WriteLine("Press a key to stop.");
+                Console.ReadLine();
+                tableDependency.Stop();
+            } 
+        }
+
+        private static void TableDependency_OnChanged(object sender, RecordChangedEventArgs<Customer> e)
+        {
+            Console.WriteLine(Environment.NewLine);
+            if (e.ChangeType != ChangeType.None)
+            {
+               
+                var changedEntity = e.Entity;
+                Console.WriteLine("DML operatios: " + e.ChangeType);
+                Console.WriteLine("ID: " + changedEntity.Id);
+                Console.WriteLine("Name: " + changedEntity.Name);
+                Console.WriteLine("SurName: " + changedEntity.Surname);
+                Console.WriteLine(Environment.NewLine);
+
+            }     
+        }
+
+        private static void TableDependency_OnError(object sender, ErrorEventArgs e)
+        {
+            Exception ex = e.Error;
+            throw ex;
+        }
+    }
+-------------
+ 6. When you run the program and make changes in the database table, you will be notified about the changes.
